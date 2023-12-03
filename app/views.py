@@ -119,6 +119,7 @@ def register_user(request):
 
 
 import base64
+
 def convert_image_to_base64(img_file):
     if img_file:
         image_content = img_file.read()
@@ -126,41 +127,6 @@ def convert_image_to_base64(img_file):
         return base64_encoded
     return None
 
-# TEST
-# from django.core.files import File
-# from django.db.models.fields.files import FieldFile
-# from tensorflow.keras.applications.vgg16 import preprocess_input
-# from django.core.files.uploadedfile import InMemoryUploadedFile
-# import numpy as np
-# import cv2
-
-# def tt(img_file, signature_file):
-#     print(f'img_file: {img_file}, type: {type(img_file)}')
-#     print(f'signature_file: {signature_file}, type: {type(signature_file)}')
-
-#     # Process img_file
-#     if isinstance(img_file, InMemoryUploadedFile):
-#         img_array = np.frombuffer(img_file.open().read(), np.uint8)
-#         if img_array.size == 0:
-#             raise ValueError("Empty image data")
-#         img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-#     elif isinstance(img_file, File):  # Assuming File is imported from django.core.files
-#         img = cv2.imread(img_file.path)
-#     else:
-#         raise ValueError("Unsupported image file type")
-    
-#     print(f'sample image: {img}')
-
-#     # Process signature_file
-#     if isinstance(signature_file, FieldFile):
-#         signature_array = np.frombuffer(signature_file.read(), np.uint8)
-#         if signature_array.size == 0:
-#             raise ValueError("Empty signature data")
-#         signature = cv2.imdecode(signature_array, cv2.IMREAD_COLOR)
-#     else:
-#         raise ValueError("Unsupported signature file type")
-
-#     print(f'signature: {signature}')
 class TestView(View):
     test_data = 'test.html'
 
@@ -194,9 +160,9 @@ class TestView(View):
             # 'result_1': f'{result_1:.2f}%',
             # 'result_2': f'{result_2:.2f}%',
             # 'result_3': f'{result_3:.2f}%',
-            'result_1': f'{result_1:.2f}',
-            'result_2': f'{result_2:.2f}',
-            'result_3': f'{result_3:.2f}',
+            'result_1': f'{result_1:.2f}%',
+            'result_2': f'{result_2:.2f}%',
+            'result_3': f'{result_3:.2f}%',
             'signature_1': user_data.signature_1.url or '',
             'signature_2': user_data.signature_2.url or '',
             'signature_3': user_data.signature_3.url or '',

@@ -40,7 +40,7 @@ img_width, img_height = 300, 150
 input_shape = (img_width, img_height, 1)
 
 # Load data
-dataset_path = r"C:\Users\lenovo\Desktop\ACADS\helps\PaSign\SIGNATURE"
+dataset_path = r"C:\\Documents\\THESIS\\DATASETS\\SIGNATURE"
 classes = os.listdir(dataset_path)
 class_to_index = {class_name: i for i, class_name in enumerate(classes)}
 
@@ -266,7 +266,7 @@ model = Model(inputs=[img_a, img_b], outputs=distance)
 model.compile(loss=contrastive_loss, optimizer=adam_optimizer, metrics=[accuracy])
 model.summary()
 
-model.fit([x_pair[:, 0], x_pair[:, 1]], y, validation_data=([x_pair_test[:, 0], x_pair_test[:, 1]], y_test), batch_size=batch_size, verbose=1, epochs=1, callbacks=callback_early_stop_reduceLROnPlateau)
+model.fit([x_pair[:, 0], x_pair[:, 1]], y, validation_data=([x_pair_test[:, 0], x_pair_test[:, 1]], y_test), batch_size=batch_size, verbose=1, epochs=10, callbacks=callback_early_stop_reduceLROnPlateau)
 
 model.save_weights('model_weights.h5')
 with open('model_architecture.json', 'w') as f:
@@ -297,9 +297,9 @@ svm_model.fit(X_train_svm, y_train_svm)
 
 svm_predictions = svm_model.predict(X_test_svm)
 
-print(f'{"="*50} svm_predictions got {"="*50}')
-print(f'x test svm: {X_test_svm}')
-print(f'{"="*100}')
+# print(f'{"="*50} svm_predictions got {"="*50}')
+# print(f'x test svm: {X_test_svm}')
+# print(f'{"="*100}')
 
 svm_accuracy = accuracy_score(y_test_svm, svm_predictions)
 print("SVM Accuracy: {:.2%}".format(svm_accuracy))
