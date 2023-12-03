@@ -45,17 +45,17 @@
             <div class="info-container">
                 <div class="nice-form-group">
                     <label>Enter Student ID Number</label>
-                    <input type="text" id="studentIdInput" placeholder="0000-0-0000" value="" />
+                    {% comment %} <input type="text" id="studentIdInput" placeholder="0000-0-0000" value="" /> {% endcomment %}
                 </div> 
                 
                 <div class="nice-form-group">
                     <label>Name</label>
-                    <input type="text" id="nameInput" placeholder="" value="" disabled />
+                    <input type="text" id="nameInput" placeholder="" value="{{ student_name }}" disabled />
                 </div>
                 
                 <div class="nice-form-group">
                     <label>Corporate Email</label>
-                    <input type="text" id="emailInput" placeholder="" value="" disabled />
+                    <input type="text" id="emailInput" placeholder="" value="{{ email }}" disabled />
                 </div>
 
                 <br>
@@ -72,43 +72,51 @@
     
                         <form runat="server">
                             <div class="image-preview1">
-                                <img id="blah1" src="" alt="" />
+                                <img id="blah1" src="{{ signature_1 }}" alt="" />
                             </div>
                         </form>
     
                         <form runat="server">
                             <div class="image-preview1">
-                                <img id="blah2" src="" alt="" />
+                                <img id="blah2" src="{{ signature_2 }}" alt="" />
                             </div>
                         </form>
     
                         <form runat="server">
                             <div class="image-preview1">
-                                <img id="blah3" src="" alt="" />
+                                <img id="blah3" src="{{ signature_3 }}" alt="" />
                             </div>
                         </form>  
                       
                     </div>
                   </div>
     
+                  {% comment %} <a class="btn" href="#">TEST</a> {% endcomment %}
+
+                {% comment %} <form action="" method="POST">
+                    <input type="file" accept="image/*" id="id_signature_files" name="signature_files" required />
+                </form> {% endcomment %}
                   
-                  <a class="btn" href="#">TEST</a>
-    
-                  <div class="info-container">
+                <div class="info-container">
                     <div class="nice-form-group">
-    
-                      <form runat="server">
-                        <div class="image-preview">
-                          <img id="blah4" src="#" alt="Your Signature Preview" />
-                        </div>
-                        <label for="imgInp4" class="custom-file-upload">
-                            Choose Image
-                            <input accept="image/*" type='file' id="imgInp4" style="display: none;" />
-                          </label>                          
-                      </form>
+                        
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="image-preview">
+                                <img id="blah4" src="#" alt="Your Signature Preview" />
+                            </div>
+                            <label for="imgInp4" class="custom-file-upload">
+                                Choose Image
+                                <!-- retain img data in context -->
+                                <input name="img_file" accept="image/*" type='file' id="imgInp4" style="display: none;" required/>
+                            </label>  
+                            <input name="student_id" type="text" id="studentIdInput" placeholder="0000-0-0000" value="{% if student_id %}{{ student_id }}{% endif %}" required /> 
+                            <input name="verify_signature" type="submit" class="btn" value="TEST" id="testBtn" />
+                        </form>
                       
                     </div>
                   </div>
+
                 </div>
   
   
@@ -116,16 +124,16 @@
                   <table class="result-table">
                       <tr>
                           <td class="result-tab">
-                            <h3>Result 1: {% if accuracy_rate is not None %}{{ accuracy_rate|floatformat:2 }}{% endif %}%</h3>
+                            <h3>Result 1: {{ result_1 }}</h3>
                         </td>
                           <td class="result-tab">
-                              <h3>Result 2: 75%</h3>
+                              <h3>Result 2: {{ result_2 }}</h3>
                           </td>
                           <td class="result-tab">
-                              <h3>Result 3: 90%</h3>
+                              <h3>Result 3: {{ result_3 }}</h3>
                           </td>
                           <td class="result-tab">
-                              <h3>Average Result: 81%</h3>
+                              <h3>Average Result: {{ avg_result }} </h3>
                           </td>
                       </tr>
                   </table>
@@ -134,6 +142,16 @@
     </section>
 
 <script src="{% static 'test/test.js' %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var imgValue = "{{ img }}"; // Assuming 'img' is the key in your context
+        var imgPreview = document.getElementById('blah4');
+
+        if (imgValue) {
+            imgPreview.src = 'data:image;base64,' + imgValue;
+        }
+    });
+</script>
 
 </main>
 
