@@ -2,6 +2,7 @@
 import os
 import cv2
 import numpy as np
+import base64
 import tensorflow as tf
 import random
 import warnings
@@ -16,14 +17,18 @@ from keras.layers import Convolution2D, BatchNormalization, MaxPooling2D, Flatte
 from keras.optimizers import RMSprop
 from keras.callbacks import EarlyStopping
 from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications.vgg16 import preprocess_input
 from keras import backend as K  # Import Keras backend
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.metrics import confusion_matrix
+from django.core.files.uploadedfile import InMemoryUploadedFile
 import matplotlib.pyplot as plt
 import seaborn as sns
+from django.core.files import File
+from django.db.models.fields.files import FieldFile
 
 # Define the get_random_image function
 def get_random_image(img_size):
@@ -35,31 +40,83 @@ img_width, img_height = 300, 150
 input_shape = (img_width, img_height, 1)
 
 # Load data
-dataset_path = "C:\\Documents\\THESIS\\DATASETS"
+dataset_path = r"C:\Users\lenovo\Desktop\ACADS\helps\PaSign\SIGNATURE"
 classes = os.listdir(dataset_path)
 class_to_index = {class_name: i for i, class_name in enumerate(classes)}
 
 images = []
 labels = []
 
-for class_name in classes:
-    class_path = os.path.join(dataset_path, class_name)
-    if os.path.isdir(class_path):
-        class_index = class_to_index[class_name]
-        for forge_real in ['forge', 'real']:
-            folder_path = os.path.join(class_path, forge_real)
-            if os.path.isdir(folder_path):
-                for filename in os.listdir(folder_path):
-                    img_path = os.path.join(folder_path, filename)
-                    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-                    img = cv2.resize(img, (img_width, img_height))
-                    img = img.reshape((img_width, img_height, 1))  # Ensure the correct shape
-                    images.append(img)
-                    labels.append(class_index)
+original_path = os.path.join(dataset_path, "ORIGINAL_SIGNATURES")
+forged_path = os.path.join(dataset_path, "FORGED_SIGNATURES")
+
+signature_names = ["Nepomuceno ", "Jamion ", "C. Vasquez ", "Dignadice ", "Panolino ", "Mangubat ", 
+                   "Arzaga ","Toledo ", "Delcoro ", "Relatado ", "Timosa ", "Bacaser ", "Realubit ", 
+                   "Obaredes ", "Banzuelo ", "Galicia ", "Tejada ", "Abia ", "Cu ", "Padul ", 
+                   "Marquez ", "Suranol ", "Salonoy ", "Badilla ", "Obanana ", "Pasamonte ", 
+                   "Tabangay ", "Villono ", "Recarze ", "S. Vasquez "]  
+
+images = []
+labels = []
+
+for class_index, signature_name in enumerate(signature_names):
+    original_class_path = os.path.join(original_path)
+    forged_class_path = os.path.join(forged_path)
+
+    # Load genuine images
+    for stroke_number in range(1, 26):
+        # Load original image
+        original_filename = f"{signature_name}{stroke_number}.jpg"
+        original_img_path = os.path.join(original_class_path, original_filename)
+
+        # print(f"Loading original image: {original_img_path}")
+
+        original_img = cv2.imread(original_img_path, cv2.IMREAD_GRAYSCALE)
+
+        if original_img is None:
+            # print(f"Error loading original image: {original_img_path}")
+            pass
+        else:
+            original_img = cv2.resize(original_img, (img_width, img_height))
+            original_img = original_img.reshape((img_width, img_height, 1))
+
+        images.extend([original_img])
+        labels.extend([class_index])  # 0 for original
+
+    # Load forged images
+    for stroke_number in range(1, 21):  # Adjusted to go up to stroke_number 20
+        # Load forged image
+        forged_filename = f"{signature_name}{stroke_number}.jpg"
+        forged_img_path = os.path.join(forged_class_path, forged_filename)
+
+        # print(f"Loading forged image: {forged_img_path}")
+
+        forged_img = cv2.imread(forged_img_path, cv2.IMREAD_GRAYSCALE)
+
+        if forged_img is None:
+            # print(f"Error loading forged image: {forged_img_path}")
+            pass
+        else:
+            forged_img = cv2.resize(forged_img, (img_width, img_height))
+            forged_img = forged_img.reshape((img_width, img_height, 1))
+
+        images.extend([forged_img])
+        labels.extend([class_index])  # 1 for forged
+
+# Check and ensure all images have the same dimensions
+image_shapes = [img.shape if img is not None else None for img in images]
+# print("Image shapes:", image_shapes)
+
+if not all(shape == (img_width, img_height, 1) or shape is None for shape in image_shapes):
+    raise ValueError("Not all images have the same dimensions.")
 
 # Convert to numpy arrays
 images = np.array(images)
 labels = np.array(labels)
+
+# print(f'{"="*50} labels got {"="*50}')
+# print(f'labels: {labels}')
+# print(f'{"="*100}')
 
 # Reshape the images to have 3 dimensions (assuming grayscale images)
 images = images.reshape((-1, img_width, img_height, 1))
@@ -209,7 +266,7 @@ model = Model(inputs=[img_a, img_b], outputs=distance)
 model.compile(loss=contrastive_loss, optimizer=adam_optimizer, metrics=[accuracy])
 model.summary()
 
-model.fit([x_pair[:, 0], x_pair[:, 1]], y, validation_data=([x_pair_test[:, 0], x_pair_test[:, 1]], y_test), batch_size=batch_size, verbose=1, epochs=10, callbacks=callback_early_stop_reduceLROnPlateau)
+model.fit([x_pair[:, 0], x_pair[:, 1]], y, validation_data=([x_pair_test[:, 0], x_pair_test[:, 1]], y_test), batch_size=batch_size, verbose=1, epochs=1, callbacks=callback_early_stop_reduceLROnPlateau)
 
 model.save_weights('model_weights.h5')
 with open('model_architecture.json', 'w') as f:
@@ -223,7 +280,8 @@ binary_predictions = distances < threshold
 
 svm_features = distances.flatten()
 
-svm_threshold = 0.5
+# svm_threshold = 0.5
+svm_threshold = 0.1
 svm_labels = (svm_features < svm_threshold).astype(int)
 
 svm_features = svm_features.reshape(-1, 1)
@@ -233,9 +291,15 @@ X_train_svm, X_test_svm, y_train_svm, y_test_svm = train_test_split(
 )
 
 svm_model = SVC(kernel='linear', C=1.0)
+
+
 svm_model.fit(X_train_svm, y_train_svm)
 
 svm_predictions = svm_model.predict(X_test_svm)
+
+print(f'{"="*50} svm_predictions got {"="*50}')
+print(f'x test svm: {X_test_svm}')
+print(f'{"="*100}')
 
 svm_accuracy = accuracy_score(y_test_svm, svm_predictions)
 print("SVM Accuracy: {:.2%}".format(svm_accuracy))
@@ -253,3 +317,67 @@ ACC = (true_positives + true_negatives) / (true_positives + false_positives + tr
 print("False Rejection Rate (FRR): {:.2%}".format(FRR))
 print("False Acceptance Rate (FAR): {:.2%}".format(FAR))
 print("Accuracy Rate (ACC): {:.2%}".format(ACC))
+
+from tensorflow.keras.applications import VGG16
+base_model = VGG16(weights='imagenet', include_top=False, input_shape=(300, 150, 3))
+model = Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
+def extract_features(img):
+    # Resize image to match the model's expected sizing
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    img = cv2.resize(img, (150, 300))
+    img = np.array(img)
+    img = np.expand_dims(img, axis=0)
+    img = preprocess_input(img)
+    features = model.predict(img)
+    features = features.flatten()
+    return features
+
+# svm model is already trained and defined globally
+def predict(img_file, signature_file):
+    # Process img_file
+    if isinstance(img_file, InMemoryUploadedFile):
+        img_array = np.frombuffer(img_file.open().read(), np.uint8)
+        if img_array.size == 0:
+            raise ValueError("Empty image data")
+        img = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
+    elif isinstance(img_file, File):  # Assuming File is imported from django.core.files
+        img = cv2.imread(img_file.path)
+    else:
+        raise ValueError("Unsupported image file type")
+
+    # Process signature_file
+    if isinstance(signature_file, FieldFile):
+        signature_array = np.frombuffer(signature_file.read(), np.uint8)
+        if signature_array.size == 0:
+            raise ValueError("Empty signature data")
+        signature = cv2.imdecode(signature_array, cv2.IMREAD_GRAYSCALE)
+    else:
+        raise ValueError("Unsupported signature file type")
+    
+    # Extract features from images (adjust this based on your SVM model's requirements)
+    img_features = extract_features(img)
+    signature_features = extract_features(signature)
+    
+    # Compute distance between images
+    distance = np.linalg.norm(img_features - signature_features)
+
+    # Predict using SVM model
+    svm_prediction = svm_model.predict([[distance]])
+
+    print(f'{"="*50} svm_prediction got {"="*50}')
+    print(f'img_features: {img_features}, len: {len(img_features)}, type: {type(img_features)}')
+    print(f'signature_features: {signature_features}, len: {len(signature_features)}, type: {type(signature_features)}')
+    print(f'distance: {distance}')
+    print(f'svm_prediction: {svm_prediction}')
+    print(f'{"="*100}')
+    # return svm_prediction[0]
+    return distance
+
+    
+    
+
+    
+
+    
+
+

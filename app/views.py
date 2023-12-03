@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from .models import UserData, get_user_signature_path
 from django.contrib import messages
 from django.conf import settings
-from .training import train_and_evaluate_model
+from .training import predict
 
 # LANDING PAGE
 class LandingPageView(View):
@@ -74,6 +74,8 @@ def register_user(request):
 
         signatures = request.FILES.getlist('signature_files')
 
+        print(f'signatures: {request.FILES}')
+
         if form.is_valid() and len(signatures) == 3:
             # Check for existing user with case-insensitive comparison
             student_id = form.cleaned_data['student_id']
@@ -116,12 +118,99 @@ def register_user(request):
     return render(request, 'upload.html', {'form': form})
 
 
+import base64
+def convert_image_to_base64(img_file):
+    if img_file:
+        image_content = img_file.read()
+        base64_encoded = base64.b64encode(image_content).decode('utf-8')
+        return base64_encoded
+    return None
+
 # TEST
+# from django.core.files import File
+# from django.db.models.fields.files import FieldFile
+# from tensorflow.keras.applications.vgg16 import preprocess_input
+# from django.core.files.uploadedfile import InMemoryUploadedFile
+# import numpy as np
+# import cv2
+
+# def tt(img_file, signature_file):
+#     print(f'img_file: {img_file}, type: {type(img_file)}')
+#     print(f'signature_file: {signature_file}, type: {type(signature_file)}')
+
+#     # Process img_file
+#     if isinstance(img_file, InMemoryUploadedFile):
+#         img_array = np.frombuffer(img_file.open().read(), np.uint8)
+#         if img_array.size == 0:
+#             raise ValueError("Empty image data")
+#         img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+#     elif isinstance(img_file, File):  # Assuming File is imported from django.core.files
+#         img = cv2.imread(img_file.path)
+#     else:
+#         raise ValueError("Unsupported image file type")
+    
+#     print(f'sample image: {img}')
+
+#     # Process signature_file
+#     if isinstance(signature_file, FieldFile):
+#         signature_array = np.frombuffer(signature_file.read(), np.uint8)
+#         if signature_array.size == 0:
+#             raise ValueError("Empty signature data")
+#         signature = cv2.imdecode(signature_array, cv2.IMREAD_COLOR)
+#     else:
+#         raise ValueError("Unsupported signature file type")
+
+#     print(f'signature: {signature}')
 class TestView(View):
     test_data = 'test.html'
 
     def get(self, request, *args, **kwargs):
         return render(request, self.test_data)
+
+    def post(self, request, *args, **kwargs):
+        is_verify_signature = request.POST.get('verify_signature')
+        student_id = request.POST.get('student_id')
+        img_file = request.FILES.get('img_file')
+
+        if not UserData.objects.filter(student_id=student_id).exists():
+            return render(request, self.test_data)
+
+        user_data = UserData.objects.get(student_id=student_id) 
+        bs64_img = convert_image_to_base64(img_file)
+
+        # result_1, result_2, result_3 = 10, 20, 30
+        # print(f'img file: {img_file}')
+        # print(f'image file type: {type(img_file)}')
+        # print(f'signature 1: {user_data.signature_1}')
+        # print(f'signature 1 type: {type(user_data.signature_1)}')
+
+        result_1 = predict(img_file, user_data.signature_1)
+        result_2 = predict(img_file, user_data.signature_2)
+        result_3 = predict(img_file, user_data.signature_3)
+        avg = (result_1 + result_2 + result_3) / 3
+
+
+        context = {
+            # 'result_1': f'{result_1:.2f}%',
+            # 'result_2': f'{result_2:.2f}%',
+            # 'result_3': f'{result_3:.2f}%',
+            'result_1': f'{result_1:.2f}',
+            'result_2': f'{result_2:.2f}',
+            'result_3': f'{result_3:.2f}',
+            'signature_1': user_data.signature_1.url or '',
+            'signature_2': user_data.signature_2.url or '',
+            'signature_3': user_data.signature_3.url or '',
+            'student_name': user_data.first_name + ' ' + user_data.last_name,
+            'email': user_data.email or '',
+            'avg_result': f'{avg:.2f}%',
+            'student_id': student_id,
+            'img': bs64_img,
+        }
+
+        if is_verify_signature:
+            return render(request, self.test_data, context)
+        else:
+            return render(request, self.test_data)
 
 def get_student_data(request, student_id):
     try:
