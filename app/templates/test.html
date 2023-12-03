@@ -1,0 +1,141 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'test/test.css' %}">
+    <title>Test Data</title>
+</head>
+<body>
+
+<main class="demo-page-content">
+    <section>
+        <div class="row">
+            <div class="column">
+                <div class="href-target" id="input-types"></div>
+                <h1>
+                    TEST SIGNATURE
+                </h1>
+                <p>Input Data & Signatures to Test</p>
+            </div>
+
+            <a href="{% url 'dashboard_page' %}" style="text-decoration:none">
+                <div class="container1">
+                    <button class="button1">
+                        <div class="flex-container">
+                            <div class="text1">
+                                Back
+                            </div>
+
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-back-up"
+                                 width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <path d="M9 13l-4 -4l4 -4m-4 4h11a4 4 0 0 1 0 8h-1"/>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </a>
+        </div>
+
+        <div class="container">
+            <div class="info-container">
+                <div class="nice-form-group">
+                    <label>Enter Student ID Number</label>
+                    <input type="text" id="studentIdInput" placeholder="0000-0-0000" value="" />
+                </div> 
+                
+                <div class="nice-form-group">
+                    <label>Name</label>
+                    <input type="text" id="nameInput" placeholder="" value="" disabled />
+                </div>
+                
+                <div class="nice-form-group">
+                    <label>Corporate Email</label>
+                    <input type="text" id="emailInput" placeholder="" value="" disabled />
+                </div>
+
+                <br>
+
+            </div>
+
+                <!-- PREVIEW IMAGE -->
+
+            <div class="test-container">
+
+                <div class="signature-container">
+                  <div class="info-container1">
+                    <div class="nice-form-group">
+    
+                        <form runat="server">
+                            <div class="image-preview1">
+                                <img id="blah1" src="" alt="" />
+                            </div>
+                        </form>
+    
+                        <form runat="server">
+                            <div class="image-preview1">
+                                <img id="blah2" src="" alt="" />
+                            </div>
+                        </form>
+    
+                        <form runat="server">
+                            <div class="image-preview1">
+                                <img id="blah3" src="" alt="" />
+                            </div>
+                        </form>  
+                      
+                    </div>
+                  </div>
+    
+                  
+                  <a class="btn" href="#">TEST</a>
+    
+                  <div class="info-container">
+                    <div class="nice-form-group">
+    
+                      <form runat="server">
+                        <div class="image-preview">
+                          <img id="blah4" src="#" alt="Your Signature Preview" />
+                        </div>
+                        <label for="imgInp4" class="custom-file-upload">
+                            Choose Image
+                            <input accept="image/*" type='file' id="imgInp4" style="display: none;" />
+                          </label>                          
+                      </form>
+                      
+                    </div>
+                  </div>
+                </div>
+  
+  
+                <div class="result-container">
+                  <table class="result-table">
+                      <tr>
+                          <td class="result-tab">
+                            <h3>Result 1: {% if accuracy_rate is not None %}{{ accuracy_rate|floatformat:2 }}{% endif %}%</h3>
+                        </td>
+                          <td class="result-tab">
+                              <h3>Result 2: 75%</h3>
+                          </td>
+                          <td class="result-tab">
+                              <h3>Result 3: 90%</h3>
+                          </td>
+                          <td class="result-tab">
+                              <h3>Average Result: 81%</h3>
+                          </td>
+                      </tr>
+                  </table>
+              </div>
+        </div>
+    </section>
+
+<script src="{% static 'test/test.js' %}"></script>
+
+</main>
+
+</body>
+</html>
