@@ -17,7 +17,6 @@ from keras.layers import Convolution2D, BatchNormalization, MaxPooling2D, Flatte
 from keras.optimizers import RMSprop
 from keras.callbacks import EarlyStopping
 from keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications.vgg16 import preprocess_input
 from keras import backend as K  # Import Keras backend
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification
@@ -40,16 +39,11 @@ img_width, img_height = 300, 150
 input_shape = (img_width, img_height, 1)
 
 # Load data
-dataset_path = r"C:\\Documents\\THESIS\\DATASETS\\SIGNATURE"
-classes = os.listdir(dataset_path)
-class_to_index = {class_name: i for i, class_name in enumerate(classes)}
-
-images = []
-labels = []
-
+dataset_path = "C:\\Documents\\THESIS\\DATASETS\\SIGNATURE"
 original_path = os.path.join(dataset_path, "ORIGINAL_SIGNATURES")
 forged_path = os.path.join(dataset_path, "FORGED_SIGNATURES")
 
+# List of signature names
 signature_names = ["Nepomuceno ", "Jamion ", "C. Vasquez ", "Dignadice ", "Panolino ", "Mangubat ", 
                    "Arzaga ","Toledo ", "Delcoro ", "Relatado ", "Timosa ", "Bacaser ", "Realubit ", 
                    "Obaredes ", "Banzuelo ", "Galicia ", "Tejada ", "Abia ", "Cu ", "Padul ", 
@@ -222,6 +216,10 @@ y = np.zeros([total_sample_size, 1])
 x_pair_test = np.zeros([test_sample_size, 2, dim1, dim2, 1])
 y_test = np.zeros([test_sample_size, 1])
 
+# Initialize lists to store filenames during testing
+tested_genuine_filenames = []
+tested_forged_filenames = []
+
 for x in range(total_sample_size):
     value = random.sample([True, False], 1)[0]
     if value:
@@ -241,10 +239,16 @@ for x in range(test_sample_size):
         x_pair_test[x, 0, :, :, 0] = pair[0]
         x_pair_test[x, 1, :, :, 0] = pair[1]
         y_test[x] = 1
+        # Store filenames
+        tested_genuine_filenames.append(pair[0])
+        tested_genuine_filenames.append(pair[1])
     else:
         x_pair_test[x, 0, :, :, 0] = random.choices(one, k=1)[0]
         x_pair_test[x, 1, :, :, 0] = random.choices(zero, k=1)[0]
         y_test[x] = 0
+        # Store filenames
+        tested_genuine_filenames.append(pair[0])  # Assuming you want the genuine filename
+        tested_forged_filenames.append(x_pair_test[x, 1, :, :, 0])  # Assuming you want the forged filename
 
 model2 = Model(inputs=siamese_model.input, outputs=siamese_model.layers[-2].output)
 
@@ -256,6 +260,7 @@ img_b = Input(shape=input_dim)
 feat_vecs_a = model2(img_a)
 feat_vecs_b = model2(img_b)
 
+# Create a new Lambda layer using the defined function
 distance = Lambda(euclidean_distance, output_shape=eucl_dist_output_shape)([feat_vecs_a, feat_vecs_b])
 
 adam_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-07, amsgrad=False)
@@ -274,32 +279,25 @@ with open('model_architecture.json', 'w') as f:
 print('saved')
 
 distances = model.predict([x_pair_test[:, 0], x_pair_test[:, 1]])
+
 threshold = 0.5
 
 binary_predictions = distances < threshold
 
 svm_features = distances.flatten()
 
-# svm_threshold = 0.5
 svm_threshold = 0.1
 svm_labels = (svm_features < svm_threshold).astype(int)
 
 svm_features = svm_features.reshape(-1, 1)
 
 X_train_svm, X_test_svm, y_train_svm, y_test_svm = train_test_split(
-        svm_features, svm_labels, test_size=0.2, random_state=42
-)
+    svm_features, svm_labels, test_size=0.2, random_state=42)
 
 svm_model = SVC(kernel='linear', C=1.0)
-
-
 svm_model.fit(X_train_svm, y_train_svm)
 
 svm_predictions = svm_model.predict(X_test_svm)
-
-# print(f'{"="*50} svm_predictions got {"="*50}')
-# print(f'x test svm: {X_test_svm}')
-# print(f'{"="*100}')
 
 svm_accuracy = accuracy_score(y_test_svm, svm_predictions)
 print("SVM Accuracy: {:.2%}".format(svm_accuracy))
@@ -314,22 +312,20 @@ FRR = false_negatives / (true_positives + false_negatives)
 FAR = false_positives / (false_positives + true_negatives)
 ACC = (true_positives + true_negatives) / (true_positives + false_positives + true_negatives + false_negatives)
 
+print(f"Threshold: {threshold}")
 print("False Rejection Rate (FRR): {:.2%}".format(FRR))
 print("False Acceptance Rate (FAR): {:.2%}".format(FAR))
 print("Accuracy Rate (ACC): {:.2%}".format(ACC))
+print("="*50)
 
-from tensorflow.keras.applications import VGG16
-base_model = VGG16(weights='imagenet', include_top=False, input_shape=(300, 150, 3))
-model = Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
-def extract_features(img):
-    # Resize image to match the model's expected sizing
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-    img = cv2.resize(img, (150, 300))
-    img = np.array(img)
-    img = np.expand_dims(img, axis=0)
-    img = preprocess_input(img)
-    features = model.predict(img)
-    features = features.flatten()
+# Load Siamese model and create a feature extraction function
+siamese_model = create_siamese_model(input_shape)  # Load your Siamese model
+feature_extraction_model = Model(inputs=siamese_model.input, outputs=siamese_model.layers[-2].output)
+
+def extract_features_siamese(img):
+    img = cv2.resize(img, (img_width, img_height))
+    img = img.reshape((1, img_width, img_height, 1))
+    features = feature_extraction_model.predict(img)
     return features
 
 # svm model is already trained and defined globally
@@ -354,43 +350,34 @@ def predict(img_file, signature_file):
     else:
         raise ValueError("Unsupported signature file type")
     
-    # Extract features from images (adjust this based on your SVM model's requirements)
-    img_features = extract_features(img)
-    signature_features = extract_features(signature)
-    
-    # Compute distance between images
-    distance = np.linalg.norm(img_features - signature_features)
+    # Extract features using Siamese model
+    img_features_siamese = extract_features_siamese(img)
+    signature_features_siamese = extract_features_siamese(signature)
 
-    # Define min_distance and max_distance based on your specific case
-    min_distance = 0.0  # Minimum distance observed during training
-    max_distance = 2000.0  # Maximum distance observed during training
+    # Compute distance between images using Siamese features
+    distance_siamese = np.linalg.norm(img_features_siamese - signature_features_siamese)
 
-    # Normalize the distance to the range [0, 1]
-    normalized_distance = (distance - min_distance) / (max_distance - min_distance)
+    # Assuming distance is computed as in your code
+    distance_min = 0  # Minimum possible distance
+    distance_max = 150  # Maximum possible distance (you need to set this based on your problem)
 
-    # Map the normalized distance to a percentage scale [0, 100]
-    percentage_distance = (1 - normalized_distance) * 100
+    # Invert the distance
+    inverted_distance = distance_max - distance_siamese
 
-    # Predict using SVM model
-    svm_prediction = svm_model.predict([[normalized_distance]])
+    # Scale the inverted distance to [0-100%]
+    scaled_distance = 100 * inverted_distance / (distance_max - distance_min)
 
-    print(f'{"="*50} svm_prediction got {"="*50}')
-    print(f'img_features: {img_features}, len: {len(img_features)}, type: {type(img_features)}')
-    print(f'signature_features: {signature_features}, len: {len(signature_features)}, type: {type(signature_features)}')
-    print(f'distance: {distance}')
-    print(f'normalized_distance: {normalized_distance}')
-    print(f'percentage_distance: {percentage_distance}')
+    # Predict using SVM model for Siamese features
+    svm_prediction_siamese = svm_model.predict([[distance_siamese]])
 
-    print(f'svm_prediction: {svm_prediction}')
+    print(f'{"="*50} svm_prediction_siamese got {"="*50}')
+    print(f'img_features_siamese: {img_features_siamese}, len: {len(img_features_siamese)}, type: {type(img_features_siamese)}')
+    print(f'signature_features_siamese: {signature_features_siamese}, len: {len(signature_features_siamese)}, type: {type(signature_features_siamese)}')
+    print(f'distance_siamese: {distance_siamese}')
+    print(f'Scaled Inverted Distance: {scaled_distance}%')
+
+    print(f'svm_prediction_siamese: {svm_prediction_siamese}')
     print(f'{"="*100}')
-    # return svm_prediction[0]
-    return percentage_distance
 
-    
-    
-
-    
-
-    
-
-
+    # Return the percentage distance based on Siamese features
+    return scaled_distance
