@@ -117,7 +117,7 @@ def register_user(request):
 
     return render(request, 'upload.html', {'form': form})
 
-
+#TEST
 import base64
 
 def convert_image_to_base64(img_file):
@@ -144,12 +144,6 @@ class TestView(View):
         user_data = UserData.objects.get(student_id=student_id) 
         bs64_img = convert_image_to_base64(img_file)
 
-        # result_1, result_2, result_3 = 10, 20, 30
-        # print(f'img file: {img_file}')
-        # print(f'image file type: {type(img_file)}')
-        # print(f'signature 1: {user_data.signature_1}')
-        # print(f'signature 1 type: {type(user_data.signature_1)}')
-
         result_1 = predict(img_file, user_data.signature_1)
         result_2 = predict(img_file, user_data.signature_2)
         result_3 = predict(img_file, user_data.signature_3)
@@ -157,9 +151,6 @@ class TestView(View):
 
 
         context = {
-            # 'result_1': f'{result_1:.2f}%',
-            # 'result_2': f'{result_2:.2f}%',
-            # 'result_3': f'{result_3:.2f}%',
             'result_1': f'{result_1:.2f}%',
             'result_2': f'{result_2:.2f}%',
             'result_3': f'{result_3:.2f}%',
@@ -191,5 +182,3 @@ def get_student_data(request, student_id):
         return JsonResponse(data)
     except UserData.DoesNotExist:
         return JsonResponse({'error': 'Student not found'}, status=404)
-    
-#MODEL

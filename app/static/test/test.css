@@ -261,7 +261,7 @@ table {
   padding: 0.5rem;
   border-radius: var(--nf-input-border-radius);
   color: #fff;
-  margin-right: 1rem;
+  /* margin-right: 1rem; */
   outline: 0;
   font-family: var(--nf-input-font-family);
   cursor: pointer;
@@ -274,7 +274,7 @@ table {
   padding: 0.5rem;
   border-radius: var(--nf-input-border-radius);
   color: #20242f;
-  margin-right: 1rem;
+  /* margin-right: 1rem; */
   outline: 0;
   font-family: var(--nf-input-font-family);
   cursor: pointer;
@@ -459,6 +459,7 @@ section p {
 .info-container {
   flex: 1;
   margin: 1em; /* Adjust spacing between containers */
+  
 }
 
 .info-container1 {
@@ -491,11 +492,11 @@ section p {
 
 .image-preview1 {
   margin-bottom: 20px;
+  margin-top: 20px;
   width: 150px;
-  height: 100px;
+  height: calc(150px * 9 / 16); /* Set the height to maintain a 16:9 ratio */
   border: 3px solid #686868;
   display: flex;
-  /* align-items: center; */
   justify-content: center;
   overflow: hidden;
   position: relative;
@@ -507,15 +508,18 @@ section p {
 
 
 .image-preview {
+  margin-top: 30px;
   margin-bottom: 20px;
   width: 300px;
-  height: 200px;
+  height: calc(300px * 9 / 16); /* Set the height to maintain a 16:9 ratio */
   border: 3px solid #686868;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   position: relative;
+  margin-left: 200px;
+  margin-right: 200px;
 }
 
 .image-preview img {
@@ -562,9 +566,11 @@ section p {
   z-index: 1;
   font-family: inherit;
   
-  /* margin-top: 100px; */
+  margin-top: 30px;
 
   border-radius: 10px;
+
+  margin-bottom: 20px;
  }
  
  .btn::before {
@@ -584,6 +590,10 @@ section p {
   transform: translateX(0);
  }
 
+ .button-container {
+  text-align: center; /* Center-align content */
+}
+
 
  /* test container */
 
@@ -593,7 +603,7 @@ section p {
   align-items: center;
   margin: 0;
   display: flex;
-  margin: 40px;
+  /* margin: 40px; */
  }
 
 
@@ -617,16 +627,16 @@ section p {
 
 
 .result-container {
-  margin-top: 20px; /* Adjust this margin as needed */
+  /* margin-top: 20px;  */
   padding: 5px;
   font-size: 10px;
   font-weight: 700;
   color: #d4af37;
   font-family: inherit;
-  width:fit-content;
+  width: 700px;
   text-align: center;
-  margin-top: 420px;
-  position: absolute;
+  /* margin-top: 20px; */
+  /* position: absolute; */
 }
 
 .result-table {
@@ -648,3 +658,31 @@ section p {
 .result-tab:not(:last-child) {
   border-right: 2px solid #000000; /* Adding a right border to separate columns */
 }
+
+
+/* /preview image horizontal/ */
+.hori {
+  display: flex;
+  flex-wrap: wrap;
+
+  /* margin-left: 70px; */
+}
+
+.hori > form {
+  /* margin-right: 25px; */
+  margin-left: 25px; 
+  margin-bottom: 10px;
+}
+
+/* 
+@media screen and (max-width: 600px) {
+  .hori {
+      flex-direction: column; 
+  }
+} */
+
+/* spacing */
+.spacing {
+  margin-bottom: 20px;
+}
+

@@ -41,104 +41,107 @@
             </a>
         </div>
 
-        <div class="container">
-            <div class="info-container">
-                <div class="nice-form-group">
-                    <label>Enter Student ID Number</label>
-                    {% comment %} <input type="text" id="studentIdInput" placeholder="0000-0-0000" value="" /> {% endcomment %}
-                </div> 
-                
-                <div class="nice-form-group">
-                    <label>Name</label>
-                    <input type="text" id="nameInput" placeholder="" value="{{ student_name }}" disabled />
-                </div>
-                
-                <div class="nice-form-group">
-                    <label>Corporate Email</label>
-                    <input type="text" id="emailInput" placeholder="" value="{{ email }}" disabled />
-                </div>
+        
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+                    
+                <div class="container">
 
-                <br>
+                    <!-- INFO CONTAINER -->
 
-            </div>
+                    <div class="info-container">
 
-                <!-- PREVIEW IMAGE -->
-
-            <div class="test-container">
-
-                <div class="signature-container">
-                  <div class="info-container1">
-                    <div class="nice-form-group">
-    
-                        <form runat="server">
-                            <div class="image-preview1">
-                                <img id="blah1" src="{{ signature_1 }}" alt="" />
-                            </div>
-                        </form>
-    
-                        <form runat="server">
-                            <div class="image-preview1">
-                                <img id="blah2" src="{{ signature_2 }}" alt="" />
-                            </div>
-                        </form>
-    
-                        <form runat="server">
-                            <div class="image-preview1">
-                                <img id="blah3" src="{{ signature_3 }}" alt="" />
-                            </div>
-                        </form>  
-                      
-                    </div>
-                  </div>
-    
-                  {% comment %} <a class="btn" href="#">TEST</a> {% endcomment %}
-
-                {% comment %} <form action="" method="POST">
-                    <input type="file" accept="image/*" id="id_signature_files" name="signature_files" required />
-                </form> {% endcomment %}
-                  
-                <div class="info-container">
-                    <div class="nice-form-group">
-                        
-                        <form method="POST" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <div class="image-preview">
-                                <img id="blah4" src="#" alt="Your Signature Preview" />
-                            </div>
-                            <label for="imgInp4" class="custom-file-upload">
-                                Choose Image
-                                <!-- retain img data in context -->
-                                <input name="img_file" accept="image/*" type='file' id="imgInp4" style="display: none;" required/>
-                            </label>  
+                        <div class="nice-form-group spacing">
+                            <label>Enter ID Number</label>
                             <input name="student_id" type="text" id="studentIdInput" placeholder="0000-0-0000" value="{% if student_id %}{{ student_id }}{% endif %}" required /> 
-                            <input name="verify_signature" type="submit" class="btn" value="TEST" id="testBtn" />
-                        </form>
-                      
-                    </div>
-                  </div>
+                    
+                                {% comment %} <input type="text" id="studentIdInput" placeholder="0000-0-0000" value="" /> {% endcomment %}
+                        </div> 
+                            
+                        <div class="nice-form-group spacing">
+                            <label>Name</label>
+                            <input type="text" id="nameInput" placeholder="" value="{{ student_name }}" disabled />
+                        </div>
+                        <div class="nice-form-group spacing">
+                            <label>Corporate Email</label>
+                            <input type="text" id="emailInput" placeholder="" value="{{ email }}" disabled />
+                        </div>
+                        
+                        {% comment %} IMAGE PREVIEW USER {% endcomment %}
+                            
+                        <label><b>Image Preview</b></label>
+                        <div class="hori">
+                            <form runat="server">
+                                <div class="image-preview1">
+                                    <img id="blah1" src="{{ signature_1 }}" alt="" />
+                                </div>
+                            </form>
 
-                </div>
-  
-  
-                <div class="result-container">
-                  <table class="result-table">
-                      <tr>
-                          <td class="result-tab">
-                            <h3>Result 1: {{ result_1 }}</h3>
-                        </td>
-                          <td class="result-tab">
-                              <h3>Result 2: {{ result_2 }}</h3>
-                          </td>
-                          <td class="result-tab">
-                              <h3>Result 3: {{ result_3 }}</h3>
-                          </td>
-                          <td class="result-tab">
-                              <h3>Average Result: {{ avg_result }} </h3>
-                          </td>
-                      </tr>
-                  </table>
-              </div>
-        </div>
+                            <form runat="server">
+                                <div class="image-preview1">
+                                    <img id="blah2" src="{{ signature_2 }}" alt="" />
+                                </div>
+                            </form>
+
+                            <form runat="server">
+                                <div class="image-preview1">
+                                    <img id="blah3" src="{{ signature_3 }}" alt="" />
+                                </div>
+                            </form>  
+                        </div>
+
+                    </div>
+
+                        <!-- PREVIEW IMAGE -->
+
+                    <div class="test-container">
+
+                        <div class="info-container">
+                            <div class="nice-form-group">
+                                    
+                                <div class="image-preview">
+                                    <img id="blah4" src="#" alt="Your Signature Preview" />
+                                </div>
+
+                                <label for="imgInp4" class="custom-file-upload">
+                                    Choose Image
+                                    <!-- retain img data in context -->
+                                    <input name="img_file" accept="image/*" type='file' id="imgInp4" style="display: none;" required/>
+                                </label> 
+
+                                                        
+                                <div class="button-container">
+                                    <input name="verify_signature" type="submit" class="btn" value="TEST" id="testBtn" />
+                                </div> 
+
+                                {% comment %} RESULT TEST {% endcomment %}
+
+                                <div class="result-container">
+                                    <table class="result-table">
+                                        <tr>
+                                            <td class="result-tab">
+                                                <h3>Result 1: {{ result_1 }}</h3>
+                                            </td>
+                                            <td class="result-tab">
+                                                <h3>Result 2: {{ result_2 }}</h3>
+                                            </td>
+                                            <td class="result-tab">
+                                                <h3>Result 3: {{ result_3 }}</h3>
+                                            </td>
+                                            <td class="result-tab">
+                                                <h3>Average Result: {{ avg_result }} </h3>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+        </form>
+
     </section>
 
 <script src="{% static 'test/test.js' %}"></script>

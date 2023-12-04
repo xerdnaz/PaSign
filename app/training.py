@@ -361,17 +361,30 @@ def predict(img_file, signature_file):
     # Compute distance between images
     distance = np.linalg.norm(img_features - signature_features)
 
+    # Define min_distance and max_distance based on your specific case
+    min_distance = 0.0  # Minimum distance observed during training
+    max_distance = 2000.0  # Maximum distance observed during training
+
+    # Normalize the distance to the range [0, 1]
+    normalized_distance = (distance - min_distance) / (max_distance - min_distance)
+
+    # Map the normalized distance to a percentage scale [0, 100]
+    percentage_distance = (1 - normalized_distance) * 100
+
     # Predict using SVM model
-    svm_prediction = svm_model.predict([[distance]])
+    svm_prediction = svm_model.predict([[normalized_distance]])
 
     print(f'{"="*50} svm_prediction got {"="*50}')
     print(f'img_features: {img_features}, len: {len(img_features)}, type: {type(img_features)}')
     print(f'signature_features: {signature_features}, len: {len(signature_features)}, type: {type(signature_features)}')
     print(f'distance: {distance}')
+    print(f'normalized_distance: {normalized_distance}')
+    print(f'percentage_distance: {percentage_distance}')
+
     print(f'svm_prediction: {svm_prediction}')
     print(f'{"="*100}')
     # return svm_prediction[0]
-    return distance
+    return percentage_distance
 
     
     
