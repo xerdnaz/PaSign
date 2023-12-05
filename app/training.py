@@ -39,7 +39,7 @@ img_width, img_height = 300, 150
 input_shape = (img_width, img_height, 1)
 
 # Load data
-dataset_path = "C:\\Documents\\THESIS\\DATASETS\\SIGNATURE"
+dataset_path = "C:\\Users\\Lenovo\\Downloads\\Thesis 2\\12-5 update\\PaSign\\SIGNATURE"
 original_path = os.path.join(dataset_path, "ORIGINAL_SIGNATURES")
 forged_path = os.path.join(dataset_path, "FORGED_SIGNATURES")
 

@@ -129,7 +129,7 @@ body {
 
 .button > img {
     width: 50px;
-    border-radius: 50px;
+    /* border-radius: 50px; */
     float: left;
 }
 
