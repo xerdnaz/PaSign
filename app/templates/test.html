@@ -77,7 +77,7 @@
                                 </div>
                             </form>
 
-                            <form runat="server">
+                            {% comment %} <form runat="server">
                                 <div class="image-preview1">
                                     <img id="blah2" src="{{ signature_2 }}" alt="" />
                                 </div>
@@ -87,7 +87,7 @@
                                 <div class="image-preview1">
                                     <img id="blah3" src="{{ signature_3 }}" alt="" />
                                 </div>
-                            </form>  
+                            </form>   {% endcomment %}
                         </div>
 
                     </div>
@@ -120,17 +120,17 @@
                                     <table class="result-table">
                                         <tr>
                                             <td class="result-tab">
-                                                <h3>Result 1: {{ result_1 }}</h3>
+                                                <h3>Result: {{ result_1 }}</h3>
                                             </td>
-                                            <td class="result-tab">
+                                            {% comment %} <td class="result-tab">
                                                 <h3>Result 2: {{ result_2 }}</h3>
                                             </td>
                                             <td class="result-tab">
                                                 <h3>Result 3: {{ result_3 }}</h3>
-                                            </td>
-                                            <td class="result-tab">
+                                            </td> {% endcomment %}
+                                            {% comment %} <td class="result-tab">
                                                 <h3>Average Result: {{ avg_result }} </h3>
-                                            </td>
+                                            </td> {% endcomment %}
                                         </tr>
                                     </table>
                                 </div>

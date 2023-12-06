@@ -312,24 +312,24 @@ FRR = false_negatives / (true_positives + false_negatives)
 FAR = false_positives / (false_positives + true_negatives)
 ACC = (true_positives + true_negatives) / (true_positives + false_positives + true_negatives + false_negatives)
 
-print(f"Threshold: {threshold}")
+# print(f"Threshold: {threshold}")
 print("False Rejection Rate (FRR): {:.2%}".format(FRR))
 print("False Acceptance Rate (FAR): {:.2%}".format(FAR))
 print("Accuracy Rate (ACC): {:.2%}".format(ACC))
 print("="*50)
 
 # Load Siamese model and create a feature extraction function
-siamese_model = create_siamese_model(input_shape)  # Load your Siamese model
-feature_extraction_model = Model(inputs=siamese_model.input, outputs=siamese_model.layers[-2].output)
+# siamese_model = create_siamese_model(input_shape)  # Load your Siamese model
+# feature_extraction_model = Model(inputs=siamese_model.input, outputs=siamese_model.layers[-2].output)
 
 def extract_features_siamese(img):
     img = cv2.resize(img, (img_width, img_height))
     img = img.reshape((1, img_width, img_height, 1))
-    features = feature_extraction_model.predict(img)
+    features = model2.predict(img)
     return features
 
-# svm model is already trained and defined globally
 def predict(img_file, signature_file):
+    
     # Process img_file
     if isinstance(img_file, InMemoryUploadedFile):
         img_array = np.frombuffer(img_file.open().read(), np.uint8)
@@ -341,7 +341,6 @@ def predict(img_file, signature_file):
     else:
         raise ValueError("Unsupported image file type")
 
-    # Process signature_file
     if isinstance(signature_file, FieldFile):
         signature_array = np.frombuffer(signature_file.read(), np.uint8)
         if signature_array.size == 0:
@@ -357,9 +356,8 @@ def predict(img_file, signature_file):
     # Compute distance between images using Siamese features
     distance_siamese = np.linalg.norm(img_features_siamese - signature_features_siamese)
 
-    # Assuming distance is computed as in your code
-    distance_min = 0  # Minimum possible distance
-    distance_max = 150  # Maximum possible distance (you need to set this based on your problem)
+    distance_min = 0  
+    distance_max = 150  
 
     # Invert the distance
     inverted_distance = distance_max - distance_siamese
