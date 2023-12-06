@@ -8,6 +8,8 @@ import random
 import warnings
 # Ignore deprecated warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from PIL import Image
 from keras.optimizers import RMSprop
@@ -19,15 +21,14 @@ from keras.callbacks import EarlyStopping
 from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K  # Import Keras backend
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import make_classification
+# from sklearn.datasets import make_classification
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report
-from sklearn.metrics import confusion_matrix
+# from sklearn.metrics import confusion_matrix
 from django.core.files.uploadedfile import InMemoryUploadedFile
-import matplotlib.pyplot as plt
-import seaborn as sns
 from django.core.files import File
 from django.db.models.fields.files import FieldFile
+
 
 # Define the get_random_image function
 def get_random_image(img_size):
@@ -38,8 +39,19 @@ def get_random_image(img_size):
 img_width, img_height = 300, 150
 input_shape = (img_width, img_height, 1)
 
+# Define the ImageDataGenerator for data augmentation
+datagen = ImageDataGenerator(
+    rotation_range=20,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True,
+    fill_mode='nearest'
+)
+
 # Load data
-dataset_path = "C:\\Users\\Lenovo\\Downloads\\Thesis 2\\12-5 update\\PaSign\\SIGNATURE"
+dataset_path = "C:\\Documents\\THESIS\\DATASETS\\SIGNATURE"
 original_path = os.path.join(dataset_path, "ORIGINAL_SIGNATURES")
 forged_path = os.path.join(dataset_path, "FORGED_SIGNATURES")
 
@@ -115,18 +127,47 @@ labels = np.array(labels)
 # Reshape the images to have 3 dimensions (assuming grayscale images)
 images = images.reshape((-1, img_width, img_height, 1))
 
+additional_images = []
+additional_labels = []
+
+for img in images:
+    # Expand the dimensions to make it compatible with datagen.flow
+    img = np.expand_dims(img, axis=0)
+    
+    # Generate augmented images
+    augmented_images = datagen.flow(img, batch_size=1)
+
+    # Take the augmented image (only one in this case)
+    augmented_image = augmented_images.next()[0]
+
+    # Append augmented image and label
+    additional_images.append(augmented_image)
+    additional_labels.append(labels[0])
+
+# Convert additional images to numpy arrays and reshape
+additional_images = np.array(additional_images)
+additional_labels = np.array(additional_labels)
+
+# Concatenate original and augmented images
+images = np.concatenate([images, additional_images])
+labels = np.concatenate([labels, additional_labels])
+
 def create_siamese_model(input_shape=input_shape):
     model = Sequential()
+
     model.add(Convolution2D(16, (8, 8), strides=(1, 1), activation="relu", input_shape=input_shape))
     model.add(BatchNormalization())
     model.add(MaxPooling2D((2, 2)))
+
     model.add(Convolution2D(32, (4, 4), strides=(1, 1), activation="relu"))
     model.add(BatchNormalization())
     model.add(MaxPooling2D((2, 2)))
+
     model.add(Convolution2D(64, (2, 2), strides=(1, 1), activation="relu"))
     model.add(BatchNormalization())
     model.add(MaxPooling2D((2, 2)))
     model.add(Flatten())
+
     model.add(Dense(512, activation='relu'))
     model.add(Dense(256, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))  # Binary classification, so 1 neuron with sigmoid activation
@@ -288,16 +329,27 @@ svm_features = distances.flatten()
 
 svm_threshold = 0.1
 svm_labels = (svm_features < svm_threshold).astype(int)
+# print(np.unique(svm_labels))
+# print(f'svm_labels: {svm_labels}')
+# print(f'distances: {distances}')
+
 
 svm_features = svm_features.reshape(-1, 1)
+# print(f'svm_features: {svm_features}')
 
 X_train_svm, X_test_svm, y_train_svm, y_test_svm = train_test_split(
     svm_features, svm_labels, test_size=0.2, random_state=42)
+# print(X_train_svm)
+# print(y_train_svm)
 
 svm_model = SVC(kernel='linear', C=1.0)
 svm_model.fit(X_train_svm, y_train_svm)
 
 svm_predictions = svm_model.predict(X_test_svm)
+
+# print(f'{"="*50} svm_predictions got {"="*50}')
+# print(f'x test svm: {X_test_svm}')
+# print(f'{"="*100}')
 
 svm_accuracy = accuracy_score(y_test_svm, svm_predictions)
 print("SVM Accuracy: {:.2%}".format(svm_accuracy))
@@ -312,24 +364,24 @@ FRR = false_negatives / (true_positives + false_negatives)
 FAR = false_positives / (false_positives + true_negatives)
 ACC = (true_positives + true_negatives) / (true_positives + false_positives + true_negatives + false_negatives)
 
-# print(f"Threshold: {threshold}")
+print(f"Threshold: {threshold}")
 print("False Rejection Rate (FRR): {:.2%}".format(FRR))
 print("False Acceptance Rate (FAR): {:.2%}".format(FAR))
 print("Accuracy Rate (ACC): {:.2%}".format(ACC))
 print("="*50)
 
 # Load Siamese model and create a feature extraction function
-# siamese_model = create_siamese_model(input_shape)  # Load your Siamese model
-# feature_extraction_model = Model(inputs=siamese_model.input, outputs=siamese_model.layers[-2].output)
+siamese_model = create_siamese_model(input_shape)  # Load your Siamese model
+feature_extraction_model = Model(inputs=siamese_model.input, outputs=siamese_model.layers[-2].output)
 
 def extract_features_siamese(img):
     img = cv2.resize(img, (img_width, img_height))
     img = img.reshape((1, img_width, img_height, 1))
-    features = model2.predict(img)
+    features = feature_extraction_model.predict(img)
     return features
 
+# svm model is already trained and defined globally
 def predict(img_file, signature_file):
-    
     # Process img_file
     if isinstance(img_file, InMemoryUploadedFile):
         img_array = np.frombuffer(img_file.open().read(), np.uint8)
@@ -341,6 +393,7 @@ def predict(img_file, signature_file):
     else:
         raise ValueError("Unsupported image file type")
 
+    # Process signature_file
     if isinstance(signature_file, FieldFile):
         signature_array = np.frombuffer(signature_file.read(), np.uint8)
         if signature_array.size == 0:
@@ -356,8 +409,9 @@ def predict(img_file, signature_file):
     # Compute distance between images using Siamese features
     distance_siamese = np.linalg.norm(img_features_siamese - signature_features_siamese)
 
-    distance_min = 0  
-    distance_max = 150  
+    # Assuming distance is computed as in your code
+    distance_min = 0  # Minimum possible distance
+    distance_max = 150  # Maximum possible distance (you need to set this based on your problem)
 
     # Invert the distance
     inverted_distance = distance_max - distance_siamese

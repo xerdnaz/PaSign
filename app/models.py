@@ -23,8 +23,6 @@ class UserData(models.Model):
     student_id = models.CharField(max_length=15)
     email = models.EmailField()
     signature_1 = models.FileField(upload_to=get_user_signature_path, blank=True, null=True)
-    signature_2 = models.FileField(upload_to=get_user_signature_path, blank=True, null=True)
-    signature_3 = models.FileField(upload_to=get_user_signature_path, blank=True, null=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

@@ -117,7 +117,7 @@ def register_user(request):
 
     return render(request, 'upload.html', {'form': form})
 
-#TEST
+# TEST
 import base64
 
 def convert_image_to_base64(img_file):
@@ -145,21 +145,14 @@ class TestView(View):
         bs64_img = convert_image_to_base64(img_file)
 
         result_1 = predict(img_file, user_data.signature_1)
-        result_2 = predict(img_file, user_data.signature_2)
-        result_3 = predict(img_file, user_data.signature_3)
-        avg = (result_1 + result_2 + result_3) / 3
+
 
 
         context = {
             'result_1': f'{result_1:.2f}%',
-            'result_2': f'{result_2:.2f}%',
-            'result_3': f'{result_3:.2f}%',
             'signature_1': user_data.signature_1.url or '',
-            'signature_2': user_data.signature_2.url or '',
-            'signature_3': user_data.signature_3.url or '',
             'student_name': user_data.first_name + ' ' + user_data.last_name,
             'email': user_data.email or '',
-            'avg_result': f'{avg:.2f}%',
             'student_id': student_id,
             'img': bs64_img,
         }
@@ -176,8 +169,6 @@ def get_student_data(request, student_id):
             'name': f"{student.first_name} {student.last_name}",
             'email': student.email,
             'signature_1_url': student.signature_1.url if student.signature_1 else '',
-            'signature_2_url': student.signature_2.url if student.signature_2 else '',
-            'signature_3_url': student.signature_3.url if student.signature_3 else '',
         }
         return JsonResponse(data)
     except UserData.DoesNotExist:
