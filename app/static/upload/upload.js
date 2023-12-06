@@ -7,19 +7,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     var selDiv = "";
-    document.querySelector('#id_signature_files').addEventListener('change', ensureThreeFilesSelected, false);
+    document.querySelector('#id_signature_files').addEventListener('change', ensureSingleFileSelected, false);
     selDiv = document.querySelector("#selectedFiles");
 
-    function ensureThreeFilesSelected(e) {
+    function ensureSingleFileSelected(e) {
         if (!e.target.files) return;
 
         var files = e.target.files;
-        if (files.length < 3) {
-            alert("Please select three files");
+        if (files.length !== 1) {
+            alert("Please select exactly one file");
             e.target.value = "";
-        } else if (files.length > 3) {
-            alert("Please select only three files");
-            e.target.value = "";
+        }
+        else {
+            handleFileSelect(e);
         }
     }
 

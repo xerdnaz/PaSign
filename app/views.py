@@ -74,9 +74,7 @@ def register_user(request):
 
         signatures = request.FILES.getlist('signature_files')
 
-        print(f'signatures: {request.FILES}')
-
-        if form.is_valid() and len(signatures) == 3:
+        if form.is_valid() and len(signatures) == 1:  # Adjust to handle one file
             # Check for existing user with case-insensitive comparison
             student_id = form.cleaned_data['student_id']
             email = form.cleaned_data['email'].lower()
@@ -87,23 +85,24 @@ def register_user(request):
                 messages.error(request, 'User with similar information already exists. Please check and try again.')
                 return render(request, 'upload.html', {'form': form})
 
-            user_data = form.save()
+            user_data = form.save(commit=False)  # Save the form but don't commit to the database yet
 
             # Use the get_user_signature_path function to determine the path
             signature_folder = get_user_signature_path(user_data, '')
+            
+            # Assuming only one file is selected
+            signature_file = signatures[0]
+            file_extension = os.path.splitext(signature_file.name)[1]
+            new_file_name = f'{student_id}_signature{file_extension}'
+            new_file_path = os.path.join(settings.MEDIA_ROOT, signature_folder, new_file_name)
 
+            os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
 
-            for i, signature_file in enumerate(signatures, start=1):
-                file_extension = os.path.splitext(signature_file.name)[1]
-                new_file_name = f'{student_id}_signature_{i}{file_extension}'
-                new_file_path = os.path.join(settings.MEDIA_ROOT, signature_folder, new_file_name)
-                
-                os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
+            with open(new_file_path, 'wb') as file:
+                file.write(signature_file.read())
 
-                with open(new_file_path, 'wb') as file:
-                    file.write(signature_file.read())
-                
-                setattr(user_data, f'signature_{i}', os.path.join(signature_folder, new_file_name))
+            # Save the file path to the corresponding signature field in the model
+            user_data.signature_1 = os.path.join(signature_folder, new_file_name)
 
             user_data.save()
 
