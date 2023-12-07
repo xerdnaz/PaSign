@@ -2,14 +2,14 @@
 import os
 import cv2
 import numpy as np
-import base64
+# import base64
 import tensorflow as tf
 import random
 import warnings
 # Ignore deprecated warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib.pyplot as plt
+# import seaborn as sns
 
 from PIL import Image
 from keras.optimizers import RMSprop
@@ -28,6 +28,15 @@ from sklearn.metrics import accuracy_score, classification_report
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.files import File
 from django.db.models.fields.files import FieldFile
+
+# Set random seeds for reproducibility
+seed_value = 42
+# Sets the seed value for NumPy
+np.random.seed(seed_value)
+# Sets the seed value for Python's built-in random module
+random.seed(seed_value)
+# Sets the seed value for TensorFlow
+tf.random.set_seed(seed_value)
 
 
 # Define the get_random_image function
@@ -127,31 +136,6 @@ labels = np.array(labels)
 # Reshape the images to have 3 dimensions (assuming grayscale images)
 images = images.reshape((-1, img_width, img_height, 1))
 
-additional_images = []
-additional_labels = []
-
-for img in images:
-    # Expand the dimensions to make it compatible with datagen.flow
-    img = np.expand_dims(img, axis=0)
-    
-    # Generate augmented images
-    augmented_images = datagen.flow(img, batch_size=1)
-
-    # Take the augmented image (only one in this case)
-    augmented_image = augmented_images.next()[0]
-
-    # Append augmented image and label
-    additional_images.append(augmented_image)
-    additional_labels.append(labels[0])
-
-# Convert additional images to numpy arrays and reshape
-additional_images = np.array(additional_images)
-additional_labels = np.array(additional_labels)
-
-# Concatenate original and augmented images
-images = np.concatenate([images, additional_images])
-labels = np.concatenate([labels, additional_labels])
-
 def create_siamese_model(input_shape=input_shape):
     model = Sequential()
 
@@ -184,7 +168,33 @@ siamese_model.summary()
 
 batch_size = 32
 
-# Generate additional images
+#   Automatic augmentation
+additional_images = []
+additional_labels = []
+
+for img in images:
+    # Expand the dimensions to make it compatible with datagen.flow
+    img = np.expand_dims(img, axis=0)
+    
+    # Generate augmented images
+    augmented_images = datagen.flow(img, batch_size=1)
+
+    # Take the augmented image (only one in this case)
+    augmented_image = augmented_images.next()[0]
+
+    # Append augmented image and label
+    additional_images.append(augmented_image)
+    additional_labels.append(labels[0])
+
+# Convert additional images to numpy arrays and reshape
+additional_images = np.array(additional_images)
+additional_labels = np.array(additional_labels)
+
+# Concatenate original and augmented images
+images = np.concatenate([images, additional_images])
+labels = np.concatenate([labels, additional_labels])
+
+# Manual synthetic image generation of additional images
 one = []
 zero = []
 
@@ -225,7 +235,6 @@ labels = labels[shuffled_indices]
 
 labels = labels.astype(int)  # Convert labels to integers
 
-# Insert the new code here
 def euclidean_distance(vects):
     x, y = vects
     sum_square = K.sum(K.square(x - y), axis=1, keepdims=True)
@@ -320,14 +329,17 @@ with open('model_architecture.json', 'w') as f:
 print('saved')
 
 distances = model.predict([x_pair_test[:, 0], x_pair_test[:, 1]])
+# Print the distances
+print("Predicted Distances:")
+print(distances)
 
-threshold = 0.5
+threshold = 10.0
 
 binary_predictions = distances < threshold
 
 svm_features = distances.flatten()
 
-svm_threshold = 0.1
+svm_threshold = 0.5
 svm_labels = (svm_features < svm_threshold).astype(int)
 # print(np.unique(svm_labels))
 # print(f'svm_labels: {svm_labels}')
@@ -370,14 +382,14 @@ print("False Acceptance Rate (FAR): {:.2%}".format(FAR))
 print("Accuracy Rate (ACC): {:.2%}".format(ACC))
 print("="*50)
 
-# Load Siamese model and create a feature extraction function
-siamese_model = create_siamese_model(input_shape)  # Load your Siamese model
-feature_extraction_model = Model(inputs=siamese_model.input, outputs=siamese_model.layers[-2].output)
+# # Load Siamese model and create a feature extraction function
+# siamese_model = create_siamese_model(input_shape)  # Load your Siamese model
+# feature_extraction_model = Model(inputs=siamese_model.input, outputs=siamese_model.layers[-2].output)
 
 def extract_features_siamese(img):
     img = cv2.resize(img, (img_width, img_height))
     img = img.reshape((1, img_width, img_height, 1))
-    features = feature_extraction_model.predict(img)
+    features = model2.predict(img)
     return features
 
 # svm model is already trained and defined globally
