@@ -20,14 +20,16 @@ from keras.optimizers import RMSprop
 from keras.callbacks import EarlyStopping
 from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K  # Import Keras backend
+from keras.regularizers import l2
 from sklearn.model_selection import train_test_split
 # from sklearn.datasets import make_classification
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score
 # from sklearn.metrics import confusion_matrix
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.files import File
 from django.db.models.fields.files import FieldFile
+
 
 # Set random seeds for reproducibility
 seed_value = 42
@@ -152,8 +154,8 @@ def create_siamese_model(input_shape=input_shape):
     model.add(MaxPooling2D((2, 2)))
     model.add(Flatten())
 
-    model.add(Dense(512, activation='relu'))
-    model.add(Dense(256, activation='relu'))
+    model.add(Dense(512, activation='relu', kernel_regularizer=l2(0.01)))
+    model.add(Dense(256, activation='relu', kernel_regularizer=l2(0.01)))
     model.add(Dense(1, activation='sigmoid'))  # Binary classification, so 1 neuron with sigmoid activation
     return model
 
@@ -333,11 +335,21 @@ distances = model.predict([x_pair_test[:, 0], x_pair_test[:, 1]])
 print("Predicted Distances:")
 print(distances)
 
-threshold = 10.0
-
+threshold = 0.5
 binary_predictions = distances < threshold
 
+# Evaluate additional metrics
+precision = precision_score(y_test, binary_predictions)
+recall = recall_score(y_test, binary_predictions)
+f1 = f1_score(y_test, binary_predictions)
+
+print("Precision: {:.2%}".format(precision))
+print("Recall: {:.2%}".format(recall))
+print("F1 Score: {:.2%}".format(f1))
+
 svm_features = distances.flatten()
+svm_features = svm_features.reshape(-1, 1)
+# print(f'svm_features: {svm_features}')
 
 svm_threshold = 0.5
 svm_labels = (svm_features < svm_threshold).astype(int)
@@ -345,12 +357,8 @@ svm_labels = (svm_features < svm_threshold).astype(int)
 # print(f'svm_labels: {svm_labels}')
 # print(f'distances: {distances}')
 
-
-svm_features = svm_features.reshape(-1, 1)
-# print(f'svm_features: {svm_features}')
-
 X_train_svm, X_test_svm, y_train_svm, y_test_svm = train_test_split(
-    svm_features, svm_labels, test_size=0.2, random_state=42)
+    svm_features, svm_labels.ravel(), test_size=0.2, random_state=42)
 # print(X_train_svm)
 # print(y_train_svm)
 
@@ -423,7 +431,7 @@ def predict(img_file, signature_file):
 
     # Assuming distance is computed as in your code
     distance_min = 0  # Minimum possible distance
-    distance_max = 150  # Maximum possible distance (you need to set this based on your problem)
+    distance_max = 200  # Maximum possible distance (you need to set this based on your problem)
 
     # Invert the distance
     inverted_distance = distance_max - distance_siamese
@@ -434,9 +442,9 @@ def predict(img_file, signature_file):
     # Predict using SVM model for Siamese features
     svm_prediction_siamese = svm_model.predict([[distance_siamese]])
 
-    print(f'{"="*50} svm_prediction_siamese got {"="*50}')
-    print(f'img_features_siamese: {img_features_siamese}, len: {len(img_features_siamese)}, type: {type(img_features_siamese)}')
-    print(f'signature_features_siamese: {signature_features_siamese}, len: {len(signature_features_siamese)}, type: {type(signature_features_siamese)}')
+    print(f'{"="*25} svm_prediction_siamese got {"="*25}')
+    # print(f'img_features_siamese: {img_features_siamese}, len: {len(img_features_siamese)}, type: {type(img_features_siamese)}')
+    # print(f'signature_features_siamese: {signature_features_siamese}, len: {len(signature_features_siamese)}, type: {type(signature_features_siamese)}')
     print(f'distance_siamese: {distance_siamese}')
     print(f'Scaled Inverted Distance: {scaled_distance}%')
 
