@@ -1,31 +1,26 @@
-#MODEL LIBS
+# Standard Library Imports
 import os
+import random
+
+# Third-Party Library Imports
 import cv2
 import numpy as np
-# import base64
 import tensorflow as tf
-import random
 import warnings
-# Ignore deprecated warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-# import matplotlib.pyplot as plt
-# import seaborn as sns
-
 from PIL import Image
 from keras.optimizers import RMSprop
 from keras.models import Sequential, Model
 from keras.layers import Input
-from keras.layers import Convolution2D, BatchNormalization, MaxPooling2D, Flatten, Dense, Lambda
+from keras.layers import (Convolution2D, BatchNormalization, MaxPooling2D, Flatten, Dense, Lambda)
 from keras.optimizers import RMSprop
 from keras.callbacks import EarlyStopping
 from keras.preprocessing.image import ImageDataGenerator
-from keras import backend as K  # Import Keras backend
+from keras import backend as K
 from keras.regularizers import l2
 from sklearn.model_selection import train_test_split
-# from sklearn.datasets import make_classification
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score
-# from sklearn.metrics import confusion_matrix
+from sklearn.metrics import (accuracy_score, classification_report, precision_score, recall_score, f1_score)
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.files import File
 from django.db.models.fields.files import FieldFile
@@ -61,6 +56,11 @@ datagen = ImageDataGenerator(
     fill_mode='nearest'
 )
 
+# Function for noise reduction using Gaussian blur
+def noise_reduction(image, kernel_size=(5, 5), sigma=0):
+    blurred_image = cv2.GaussianBlur(image, kernel_size, sigma)
+    return blurred_image
+
 # Load data
 dataset_path = "C:\\Documents\\THESIS\\DATASETS\\SIGNATURE"
 original_path = os.path.join(dataset_path, "ORIGINAL_SIGNATURES")
@@ -95,6 +95,7 @@ for class_index, signature_name in enumerate(signature_names):
             pass
         else:
             original_img = cv2.resize(original_img, (img_width, img_height))
+            original_img = noise_reduction(original_img) 
             original_img = original_img.reshape((img_width, img_height, 1))
 
         images.extend([original_img])
@@ -115,6 +116,7 @@ for class_index, signature_name in enumerate(signature_names):
             pass
         else:
             forged_img = cv2.resize(forged_img, (img_width, img_height))
+            forged_img = noise_reduction(forged_img)
             forged_img = forged_img.reshape((img_width, img_height, 1))
 
         images.extend([forged_img])
@@ -258,9 +260,11 @@ def contrastive_loss(y_true, y_pred):
     margin_square = K.square(K.maximum(margin - y_pred, 0))
     return K.mean(y_true * square_pred + (1 - y_true) * margin_square)
 
+# Constants
 total_sample_size = 50
 test_sample_size = 200
 dim1, dim2 = 300, 150
+
 
 x_pair = np.zeros([total_sample_size, 2, dim1, dim2, 1])
 y = np.zeros([total_sample_size, 1])
